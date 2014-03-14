@@ -19,3 +19,9 @@
 
 #Backups
 *.*~
+
+#Others
+Release/
+Debug/
+*.layout
+*.depend
