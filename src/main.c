@@ -1,15 +1,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
-#include "matrix.h"
+#include "maze.h"
 
 int main (int argc, char *argv[])
 {
-    int m_rows, m_cols;
-    m_rows = 3;
-    m_cols = 3;
-    int mtx[m_rows][m_cols];
-    fill_matrix_random(m_rows, m_cols, mtx);
-    print_matrix(m_rows, m_cols, mtx);
+    Matrix* m = malloc(sizeof(Matrix));
+    init_matrix(m, 15, 25);
+    print_matrix(m);
+    printf("\n");
+    make_maze(m);
+    print_matrix_as_maze(m);
     return 0;
 }
