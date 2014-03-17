@@ -1,14 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
+#include <cairo.h>
 #include "maze.h"
 
-void on_window_destroy (GtkObject *object, gpointer user_data)
-{
-    gtk_main_quit ();
-}
-
-int main (int argc, char* argv[])
+int main (int argc, char *argv[])
 {
     /*
     Matrix* m = malloc(sizeof(Matrix));
@@ -20,19 +16,17 @@ int main (int argc, char* argv[])
     */
 
     GtkBuilder* builder;
-    GtkWidget* window;
+    GObject* window;
 
     gtk_init (&argc, &argv);
 
     builder = gtk_builder_new ();
     gtk_builder_add_from_file (builder, "src/gui.glade", NULL);
-    window = GTK_WIDGET (gtk_builder_get_object (builder, "main_window"));
-    gtk_builder_connect_signals (builder, NULL);
 
-    g_object_unref (G_OBJECT (builder));
+    window = gtk_builder_get_object (builder, "main_window");
+    g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
-    gtk_widget_show (window);
     gtk_main ();
 
-    return 0;
+  return 0;
 }

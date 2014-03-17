@@ -32,11 +32,11 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="`pkg-config gtk+-2.0 --cflags`" />
+			<Add option="`pkg-config gtk+-3.0 --cflags`" />
 			<Add option="-Wall" />
 		</Compiler>
 		<Linker>
-			<Add option="`pkg-config gtk+-2.0 --libs`" />
+			<Add option="`pkg-config gtk+-3.0 --libs`" />
 		</Linker>
 		<Unit filename="src/main.c">
 			<Option compilerVar="CC" />
