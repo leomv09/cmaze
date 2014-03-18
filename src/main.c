@@ -1,22 +1,24 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
-#include <cairo.h>
 #include "maze.h"
+
+#define SHOW_STEPS 1
+#define DELAY 150000
 
 int main (int argc, char *argv[])
 {
     /*
-    Matrix* m = malloc(sizeof(Matrix));
+    Matrix *m = malloc(sizeof(Matrix));
     init_matrix(m, 15, 25);
     print_matrix(m);
     printf("\n");
-    make_maze(m);
+    make_maze(m, SHOW_STEPS, DELAY);
     print_matrix_as_maze(m);
     */
 
-    GtkBuilder* builder;
-    GObject* window;
+    GtkBuilder *builder;
+    GObject *window;
 
     gtk_init (&argc, &argv);
 
@@ -28,5 +30,5 @@ int main (int argc, char *argv[])
 
     gtk_main ();
 
-  return 0;
+    return 0;
 }

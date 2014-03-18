@@ -13,9 +13,9 @@ typedef struct
     Set a unsigned int as a seed for srand() function.
     @param seed: Pointer to the unsigned int.
 */
-void set_seed(unsigned int* seed)
+void set_seed(unsigned int *seed)
 {
-    FILE* urandom = fopen("/dev/urandom", "r");
+    FILE *urandom = fopen("/dev/urandom", "r");
     fread(seed, sizeof(int), 1, urandom);
     fclose(urandom);
 }
@@ -26,7 +26,7 @@ void set_seed(unsigned int* seed)
     @param rows: Number of rows of the matrix.
     @param cols: Number of cols of the matrix.
 */
-void init_matrix(Matrix* m, int rows, int cols)
+void init_matrix(Matrix *m, int rows, int cols)
 {
     m->rows = rows;
     m->cols = cols;
@@ -43,7 +43,7 @@ void init_matrix(Matrix* m, int rows, int cols)
     Fill a matrix with random numbers between 1 and RAND_MAX.
     @param m: Pointer to the Matrix struct.
 */
-void fill_matrix_random(Matrix* m)
+void fill_matrix_random(Matrix *m)
 {
     unsigned int seed;
     set_seed(&seed);
@@ -63,7 +63,7 @@ void fill_matrix_random(Matrix* m)
     Print the values of the matrix in the console.
     @param m: Pointer to the Matrix struct.
 */
-void print_matrix(Matrix* m)
+void print_matrix(Matrix *m)
 {
     int i, j;
     for (i=0; i<m->rows; i++)
@@ -80,7 +80,7 @@ void print_matrix(Matrix* m)
     Print a matrix graphically as a maze. (0 == path, other number == wall)
     @param m: Pointer to the Matrix struct.
 */
-void print_matrix_as_maze(Matrix* m)
+void print_matrix_as_maze(Matrix *m)
 {
     int i, j;
     for (i=0; i<m->rows; i++)
@@ -108,7 +108,7 @@ void print_matrix_as_maze(Matrix* m)
 */
 Cell* get_Cell(int x, int y)
 {
-    Cell* cell = malloc(sizeof(Cell));
+    Cell *cell = malloc(sizeof(Cell));
     cell->x = x;
     cell->y = y;
     return cell;
@@ -122,8 +122,8 @@ Cell* get_Cell(int x, int y)
 */
 gint compare_cells(gconstpointer a, gconstpointer b)
 {
-    Cell* cell_a = (Cell*) a;
-    Cell* cell_b = (Cell*) b;
+    Cell *cell_a = (Cell*) a;
+    Cell *cell_b = (Cell*) b;
 
     if (cell_a->x == cell_b->x && cell_a->y == cell_b->y)
         return 0;
@@ -142,9 +142,9 @@ gint compare_cells(gconstpointer a, gconstpointer b)
 */
 gint compare_value_of_cells_in_matrix(gconstpointer a, gconstpointer b, gpointer data)
 {
-    Cell* cell_a = (Cell*) a;
-    Cell* cell_b = (Cell*) b;
-    Matrix* m = (Matrix*) data;
+    Cell *cell_a = (Cell*) a;
+    Cell *cell_b = (Cell*) b;
+    Matrix *m = (Matrix*) data;
 
     if (m->matrix[cell_a->x][cell_a->y] == m->matrix[cell_b->x][cell_b->y])
         return 0;
@@ -159,7 +159,7 @@ gint compare_value_of_cells_in_matrix(gconstpointer a, gconstpointer b, gpointer
     @param cell: Pointer to the cell to be marked.
     @param m: Pointer to the Matrix struct.
 */
-void mark_cell_as_maze(Cell* cell, Matrix* m)
+void mark_cell_as_maze(Cell *cell, Matrix *m)
 {
     m->matrix[cell->x][cell->y] = 0;
     printf("Marked as maze.\n");
@@ -170,7 +170,7 @@ void mark_cell_as_maze(Cell* cell, Matrix* m)
     @param cell: Cell to be marked.
     @param m: Pointer to the Matrix struct.
 */
-void mark_cell_as_wall(Cell* cell, Matrix* m)
+void mark_cell_as_wall(Cell *cell, Matrix *m)
 {
     m->matrix[cell->x][cell->y] = -1;
     printf("Marked as wall.\n");
@@ -182,7 +182,7 @@ void mark_cell_as_wall(Cell* cell, Matrix* m)
     @param neighbor: Pointer to the cell to be inserted.
     @param m: Pointer to the Matrix struct.
 */
-void add_neighbor_to_list_if_not_exist(GList** neighbors_list, Cell* neighbor, Matrix* m)
+void add_neighbor_to_list_if_not_exist(GList** neighbors_list, Cell *neighbor, Matrix *m)
 {
     if (g_list_find_custom(*neighbors_list, neighbor, compare_cells) == NULL)
     {
@@ -201,7 +201,7 @@ void add_neighbor_to_list_if_not_exist(GList** neighbors_list, Cell* neighbor, M
     @param neighbors_list: Direction of a pointer to the list.
     @param m: Pointer to the Matrix struct.
 */
-void add_neighbors_to_list(Cell* cell, GList** neighbors_list, Matrix* m)
+void add_neighbors_to_list(Cell *cell, GList** neighbors_list, Matrix *m)
 {
     printf("Getting neighbors...\n");
     Cell* current_neighbor;
@@ -237,7 +237,7 @@ void add_neighbors_to_list(Cell* cell, GList** neighbors_list, Matrix* m)
     @param cell: Pointer to the reference cell.
     @param m: Pointer to the Matrix struct.
 */
-int get_adjacent_maze_cells_count(Cell* cell, Matrix* m)
+int get_adjacent_maze_cells_count(Cell *cell, Matrix *m)
 {
     int count = 0;
 
@@ -258,7 +258,7 @@ int get_adjacent_maze_cells_count(Cell* cell, Matrix* m)
     Mark as wall all the cells that aren't marked as wall or as path.
     @param m: Pointer to the Matrix struct.
 */
-void mark_remaining_cells_as_walls(Matrix* m)
+void mark_remaining_cells_as_walls(Matrix *m)
 {
     int i, j;
     for (i=0; i<m->rows; i++)
@@ -274,8 +274,25 @@ void mark_remaining_cells_as_walls(Matrix* m)
 }
 
 /*
+    Pause the current execution for a certain microseconds.
+    @param show_steps: 1 to make a delay.
+                       Otherwise other number.
+    @param msec: Duration of the delay in microseconds.
+*/
+void delay(int show_steps, useconds_t msec)
+{
+    if (show_steps == 1)
+    {
+        usleep(msec);
+    }
+}
+
+/*
     Appy Prim Algorithm to a matrix and construct a maze.
     @param m: Pointer to the Matrix struct.
+    @param show_steps: 1 to pause the function when marking a cell as part of the maze.
+                       Otherwise other number.
+    @param msec: Duration of the pause in microseconds.
 
     Pseudocode:
         1) Fill the matrix with random numbers.
@@ -288,16 +305,17 @@ void mark_remaining_cells_as_walls(Matrix* m)
                 4.2.2) Add the neighbors of the cell to the neighbors list.
             4.3) Mark the cell as a wall.
 */
-void make_maze(Matrix* m)
+void make_maze(Matrix *m, int show_steps, useconds_t msec)
 {
     fill_matrix_random(m);
+    delay(show_steps, msec * 2);
 
     unsigned int seed;
     set_seed(&seed);
     srand(seed);
 
-    GList* neighbors_list = NULL;
-    Cell* current_cell = malloc(sizeof(Cell));
+    GList *neighbors_list = NULL;
+    Cell *current_cell = malloc(sizeof(Cell));
 
     current_cell->x = rand()%m->rows;
     current_cell->y = rand()%m->cols;
@@ -305,6 +323,7 @@ void make_maze(Matrix* m)
     printf("Initial Cell: (%d, %d).\n", current_cell->x, current_cell->y);
     mark_cell_as_maze(current_cell, m);
     add_neighbors_to_list(current_cell, &neighbors_list, m);
+    delay(show_steps, msec);
     printf("\n");
 
     while (g_list_length(neighbors_list) > 0)
@@ -318,6 +337,7 @@ void make_maze(Matrix* m)
         {
             mark_cell_as_maze(current_cell, m);
             add_neighbors_to_list(current_cell, &neighbors_list, m);
+            delay(show_steps, msec);
         }
         else
         {
