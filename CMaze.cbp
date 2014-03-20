@@ -12,7 +12,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="15 25 10 2" />
+				<Option parameters="25 25 5 2" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -22,7 +22,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="0" />
 				<Option compiler="gcc" />
-				<Option parameters="15 25 10 2" />
+				<Option parameters="25 25 5 2" />
 				<Compiler>
 					<Add option="-O2" />
 					<Add option="-Wall" />
@@ -39,6 +39,10 @@
 		<Linker>
 			<Add option="`pkg-config gtk+-3.0 --libs`" />
 		</Linker>
+		<Unit filename="src/args.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/args.h" />
 		<Unit filename="src/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
