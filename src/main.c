@@ -15,7 +15,7 @@
 
 
 
-void* iniciar(void *m)
+void* start(void *m)
 {
     make_maze((Matrix*) m, ANIMATED, DELAY);
     pthread_exit(0);
@@ -70,7 +70,7 @@ static void create_maze(GtkWidget *widget, Matrix *m)
 static void create_maze_animated(GtkWidget *widget, Matrix *m)
 {
     pthread_t animated_thread;
-    pthread_create(&animated_thread, NULL,  iniciar, m);
+    pthread_create(&animated_thread, NULL,  start, m);
 }
 
 int main(int argc, char *argv[])
