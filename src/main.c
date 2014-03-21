@@ -13,6 +13,15 @@
 #define CHEESE 2
 #define POISON 3
 
+
+
+void* iniciar(void *m)
+{
+    make_maze((Matrix*) m, ANIMATED, DELAY);
+    pthread_exit(0);
+
+}
+
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Matrix *m)
 {
     int height = gtk_widget_get_allocated_height(widget);
@@ -31,9 +40,10 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Matrix *m)
     int i, j;
     for(i=0; i<m->rows; i++)
     {
+
         for(j=0; j<m->cols; j++)
         {
-            if(m->matrix[i][j] == 0)
+            if(m->matrix[i][j] == ROWS)
             {
                 cairo_rectangle(cr, x, y, cell_width, cell_height);
                 cairo_fill(cr);
@@ -59,7 +69,8 @@ static void create_maze(GtkWidget *widget, Matrix *m)
 
 static void create_maze_animated(GtkWidget *widget, Matrix *m)
 {
-    make_maze(m, ANIMATED, DELAY);
+    pthread_t animated_thread;
+    pthread_create(&animated_thread, NULL,  iniciar, m);
 }
 
 int main(int argc, char *argv[])
@@ -89,6 +100,7 @@ int main(int argc, char *argv[])
 
         button_create = gtk_builder_get_object (builder, "button_create");
         g_signal_connect(button_create, "clicked", G_CALLBACK(create_maze), m);
+
 
         button_create_animated = gtk_builder_get_object (builder, "button_create_animated");
         g_signal_connect(button_create_animated, "clicked", G_CALLBACK(create_maze_animated), m);
