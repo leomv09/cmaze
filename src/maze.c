@@ -32,11 +32,16 @@ void init_matrix(Matrix *m, int rows, int cols)
     m->cols = cols;
     m->matrix = (int**) malloc(rows * sizeof(int*));
 
-    int i;
+    int i, j;
     for(i=0; i<rows; i++)
     {
         m->matrix[i] = (int*) malloc(cols * sizeof(int));
+        for (j=0; j<cols; j++)
+        {
+            m->matrix[i][j] = -1;
+        }
     }
+
 }
 
 /*

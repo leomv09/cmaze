@@ -1,11 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <pthread.h>
 #include <gtk/gtk.h>
 #include <cairo.h>
 #include "args.h"
 #include "maze.h"
 
-#define DELAY 100000
+#define DELAY 9000
 #define ANIMATED 1
 #define NOT_ANIMATED 0
 #define ROWS 0
@@ -13,14 +14,7 @@
 #define CHEESE 2
 #define POISON 3
 
-
-
-void* start(void *m)
-{
-    make_maze((Matrix*) m, ANIMATED, DELAY);
-    pthread_exit(0);
-
-}
+static int animation_running = 0;
 
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Matrix *m)
 {
@@ -40,10 +34,9 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Matrix *m)
     int i, j;
     for(i=0; i<m->rows; i++)
     {
-
         for(j=0; j<m->cols; j++)
         {
-            if(m->matrix[i][j] == ROWS)
+            if(m->matrix[i][j] == 0)
             {
                 cairo_rectangle(cr, x, y, cell_width, cell_height);
                 cairo_fill(cr);
@@ -56,21 +49,35 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Matrix *m)
     }
 }
 
-static gboolean draw_maze_timer(GtkWidget *widget)
+static gboolean redraw_widget(GtkWidget *widget)
 {
-  gtk_widget_queue_draw(widget);
-  return TRUE;
+    gtk_widget_queue_draw(widget);
+    return TRUE;
 }
 
-static void create_maze(GtkWidget *widget, Matrix *m)
+void* create_maze_animated_thread(void *param)
 {
-    make_maze(m, NOT_ANIMATED, DELAY);
+    animation_running = 1;
+    make_maze((Matrix*) param, ANIMATED, DELAY);
+    animation_running = 0;
+    pthread_exit(0);
 }
 
 static void create_maze_animated(GtkWidget *widget, Matrix *m)
 {
-    pthread_t animated_thread;
-    pthread_create(&animated_thread, NULL,  start, m);
+    if (animation_running == 0)
+    {
+        pthread_t animated_thread;
+        pthread_create(&animated_thread, NULL, create_maze_animated_thread, m);
+    }
+}
+
+static void create_maze(GtkWidget *widget, Matrix *m)
+{
+    if (animation_running == 0)
+    {
+        make_maze(m, NOT_ANIMATED, DELAY);
+    }
 }
 
 int main(int argc, char *argv[])
@@ -101,11 +108,10 @@ int main(int argc, char *argv[])
         button_create = gtk_builder_get_object (builder, "button_create");
         g_signal_connect(button_create, "clicked", G_CALLBACK(create_maze), m);
 
-
         button_create_animated = gtk_builder_get_object (builder, "button_create_animated");
         g_signal_connect(button_create_animated, "clicked", G_CALLBACK(create_maze_animated), m);
 
-        g_timeout_add(33, (GSourceFunc) draw_maze_timer, (gpointer) GTK_WIDGET(drawing_area));
+        g_timeout_add(33, (GSourceFunc) redraw_widget, (gpointer) GTK_WIDGET(drawing_area));
         gtk_widget_show_all(GTK_WIDGET(window));
 
         gtk_main();
