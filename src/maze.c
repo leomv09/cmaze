@@ -3,6 +3,12 @@
 #include <glib.h>
 #include "maze.h"
 
+#define WALL -1
+#define PATH 0
+#define GOAL 1
+#define CHEESE 2
+#define POISON 3
+
 typedef struct
 {
     int x;
@@ -38,7 +44,7 @@ void init_matrix(Matrix *m, int rows, int cols)
         m->matrix[i] = (int*) malloc(cols * sizeof(int));
         for (j=0; j<cols; j++)
         {
-            m->matrix[i][j] = -1;
+            m->matrix[i][j] = WALL;
         }
     }
 
@@ -82,7 +88,7 @@ void print_matrix(Matrix *m)
 }
 
 /*
-    Print a matrix graphically as a maze. (0 == path, other number == wall)
+    Print a matrix graphically as a maze.
     @param m: Pointer to the Matrix struct.
 */
 void print_matrix_as_maze(Matrix *m)
@@ -92,7 +98,7 @@ void print_matrix_as_maze(Matrix *m)
     {
         for (j=0; j<m->cols; j++)
         {
-            if (m->matrix[i][j] == 0)
+            if (m->matrix[i][j] == PATH)
             {
                 printf("░░");
             }
@@ -166,7 +172,7 @@ gint compare_value_of_cells_in_matrix(gconstpointer a, gconstpointer b, gpointer
 */
 void mark_cell_as_maze(Cell *cell, Matrix *m)
 {
-    m->matrix[cell->x][cell->y] = 0;
+    m->matrix[cell->x][cell->y] = PATH;
     printf("Marked as maze.\n");
 }
 
@@ -177,7 +183,7 @@ void mark_cell_as_maze(Cell *cell, Matrix *m)
 */
 void mark_cell_as_wall(Cell *cell, Matrix *m)
 {
-    m->matrix[cell->x][cell->y] = -1;
+    m->matrix[cell->x][cell->y] = WALL;
     printf("Marked as wall.\n");
 }
 
@@ -246,13 +252,13 @@ int get_adjacent_maze_cells_count(Cell *cell, Matrix *m)
 {
     int count = 0;
 
-    if (cell->x-1 >= 0 && m->matrix[cell->x-1][cell->y] == 0)
+    if (cell->x-1 >= 0 && m->matrix[cell->x-1][cell->y] == PATH)
         count++;
-    if (cell->x+1 < m->rows && m->matrix[cell->x+1][cell->y] == 0)
+    if (cell->x+1 < m->rows && m->matrix[cell->x+1][cell->y] == PATH)
         count++;
-    if (cell->y-1 >= 0 && m->matrix[cell->x][cell->y-1] == 0)
+    if (cell->y-1 >= 0 && m->matrix[cell->x][cell->y-1] == PATH)
         count++;
-    if (cell->y+1 < m->cols && m->matrix[cell->x][cell->y+1] == 0)
+    if (cell->y+1 < m->cols && m->matrix[cell->x][cell->y+1] == PATH)
         count++;
 
     printf("Cell has %d adjacents maze cells.\n", count);
@@ -272,7 +278,7 @@ void mark_remaining_cells_as_walls(Matrix *m)
         {
             if (m->matrix[i][j] > 0)
             {
-                m->matrix[i][j] = -1;
+                m->matrix[i][j] = WALL;
             }
         }
     }
@@ -352,4 +358,60 @@ void make_maze(Matrix *m, int show_steps, useconds_t msec)
     }
 
     mark_remaining_cells_as_walls(m);
+}
+
+void mark_random_cel_as(Matrix *m, int cell_type)
+{
+    unsigned int seed;
+    set_seed(&seed);
+    srand(seed);
+
+    int x = rand()%m->rows;
+    int y = rand()%m->cols;
+
+    while (m->matrix[x][y] != PATH)
+    {
+        x = rand()%m->rows;
+        y = rand()%m->cols;
+    }
+
+    m->matrix[x][y] = cell_type;
+}
+
+void put_objets_on_maze(Matrix *m, int cheese_amount, int poison_amount)
+{
+    int i;
+    for (i=0; i<cheese_amount; i++)
+    {
+        mark_random_cel_as(m, CHEESE);
+    }
+    for (i=0; i<poison_amount; i++)
+    {
+        mark_random_cel_as(m, POISON);
+    }
+    mark_random_cel_as(m, GOAL);
+}
+
+void init_mouse(Matrix *m, Mouse* mouse)
+{
+    mouse->x = rand()%m->rows;
+    mouse->y = rand()%m->cols;
+
+    while (m->matrix[mouse->x][mouse->y] != PATH)
+    {
+        mouse->x = rand()%m->rows;
+        mouse->y = rand()%m->cols;
+    }
+}
+
+void depth_first_search(Matrix *m, Mouse* mouse)
+{
+}
+
+void breadth_first_search(Matrix *m, Mouse* mouse)
+{
+}
+
+void random_search(Matrix *m, Mouse* mouse)
+{
 }

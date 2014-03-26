@@ -82,7 +82,7 @@
                 <property name="row_spacing">4</property>
                 <property name="column_spacing">20</property>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton1">
+                  <object class="GtkColorButton" id="colorbutton_exit">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
@@ -112,7 +112,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton2">
+                  <object class="GtkColorButton" id="colorbutton_cheese">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
@@ -141,11 +141,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton3">
+                  <object class="GtkColorButton" id="colorbutton_poison">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
                     <property name="receives_default">True</property>
+                    <property name="xalign">0.50999999046325684</property>
                     <property name="title" translatable="yes"/>
                     <property name="color">#5c5c35356666</property>
                   </object>
@@ -170,7 +171,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton4">
+                  <object class="GtkColorButton" id="colorbutton_dfs">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
@@ -189,7 +190,7 @@
                   <object class="GtkLabel" id="label_algo1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Algoritmo 1</property>
+                    <property name="label" translatable="yes">Profundidad</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -199,7 +200,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton5">
+                  <object class="GtkColorButton" id="colorbutton_bfs">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
@@ -218,7 +219,7 @@
                   <object class="GtkLabel" id="label_algo2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Algoritmo 2</property>
+                    <property name="label" translatable="yes">Anchura</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
@@ -228,7 +229,7 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkColorButton" id="colorbutton6">
+                  <object class="GtkColorButton" id="colorbutton_random">
                     <property name="visible">True</property>
                     <property name="sensitive">False</property>
                     <property name="can_focus">False</property>
@@ -247,7 +248,7 @@
                   <object class="GtkLabel" id="label_algo3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Algoritmo 3</property>
+                    <property name="label" translatable="yes">Aleatorio</property>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>

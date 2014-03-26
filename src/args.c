@@ -49,11 +49,10 @@ int check_args(int argc, char* argv[])
     return 1;
 }
 
-void parse_args(int argc, char* argv[], int arg_array[])
+void parse_args(int argc, char* argv[], Arguments* args)
 {
-    int i;
-    for (i=1; i<argc; i++)
-    {
-        arg_array[i-1] = atoi(argv[i]);
-    }
+    args->rows = atoi(argv[1]);
+    args->cols = atoi(argv[2]);
+    args->cheese = atoi(argv[3]);
+    args->poison = atoi(argv[4]);
 }
