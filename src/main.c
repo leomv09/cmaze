@@ -12,7 +12,7 @@
 
 typedef struct
 {
-    Matrix* m;
+    Maze* m;
     Arguments* args;
     Mouse** mice;
 } Global_Data;
@@ -35,11 +35,11 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
     int y = 0;
 
     int i, j;
-    for(i=0; i<data->m->rows; i++)
+    for (i=0; i<data->m->rows; i++)
     {
-        for(j=0; j<data->m->cols; j++)
+        for (j=0; j<data->m->cols; j++)
         {
-            if(data->m->matrix[i][j] == 0)
+            if (data->m->matrix[i][j]->type == PATH)
             {
                 cairo_rectangle(cr, x, y, cell_width, cell_height);
                 cairo_fill(cr);
@@ -62,10 +62,11 @@ void* create_maze_animated_thread(void *param)
 {
     animation_running = 1;
 
-    int i;
     Global_Data *data = (Global_Data*) param;
     make_maze(data->m, ANIMATED, DELAY);
-    put_objets_on_maze(data->m, 5, 1);
+    put_objets_on_maze(data->m, data->args->cheese, data->args->poison);
+
+    int i;
     for (i=0; i<3; i++)
     {
         init_mouse(data->m, data->mice[i]);
@@ -88,9 +89,11 @@ static void create_maze(GtkWidget *widget, Global_Data *data)
 {
     if (animation_running == 0)
     {
-        int i;
+
         make_maze(data->m, NOT_ANIMATED, DELAY);
-        put_objets_on_maze(data->m, 5, 1);
+        put_objets_on_maze(data->m, data->args->cheese, data->args->poison);
+
+        int i;
         for (i=0; i<3; i++)
         {
             init_mouse(data->m, data->mice[i]);
@@ -123,14 +126,10 @@ static void start_simulation(GtkWidget *widget, Global_Data *data)
 {
     if (animation_running == 0)
     {
-        animation_running = 1;
-
         pthread_t* threads = malloc(3 * sizeof(pthread_t));
         pthread_create(&threads[0], NULL, start_depth_thread, data);
         pthread_create(&threads[1], NULL, start_breadth_thread, data);
         pthread_create(&threads[2], NULL, start_random_thread, data);
-
-        animation_running = 0;
     }
 }
 
@@ -140,25 +139,29 @@ int main(int argc, char *argv[])
 
     if (check)
     {
+        // Program arguments.
         Arguments* args = malloc(sizeof(Arguments));
-        Matrix *m = malloc(sizeof(Matrix));
-        Mouse **mice = malloc(3 * sizeof(Mouse*));
+        parse_args(argc, argv, args);
 
+        // Maze.
+        Maze *m = malloc(sizeof(Maze));
+        allocate_maze(m, args->rows, args->cols);
+
+        // Array of Mice.
+        Mouse **mice = malloc(3 * sizeof(Mouse*));
         int i;
         for (i=0; i<3; i++)
         {
             mice[i] = malloc(sizeof(Mouse));
         }
 
+        // Data that will be passed to the signals.
         Global_Data* data = malloc(sizeof(Global_Data));
         data->args = args;
         data->m = m;
         data->mice = mice;
 
-        parse_args(argc, argv, args);
-        init_matrix(m, args->rows, args->cols);
         gtk_init (&argc, &argv);
-
         GtkBuilder *builder = gtk_builder_new ();
         gtk_builder_add_from_file (builder, "src/gui.glade", NULL);
 
