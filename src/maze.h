@@ -41,12 +41,10 @@ typedef struct
 void allocate_maze(Maze *m, int rows, int cols);
 void print_maze(Maze *m);
 void print_maze_graphical(Maze *m);
-void make_maze(Maze *m, int show_steps, useconds_t delay);
-void put_objets_on_maze(Maze *m, int cheese_amount, int poison_amount);
-void init_mouse(Maze *m, Mouse* mouse);
-
-void depth_first_search(Maze *m, Mouse* mouse);
-void breadth_first_search(Maze *m, Mouse* mouse);
-void random_search(Maze *m, Mouse* mouse);
+void make_maze(Maze *m, int cheese_amount, int poison_amount, int show_steps);
+void init_mice(Maze *m, Mouse **mouse);
+void depth_first_search(Maze *m, Mouse *mouse);
+void breadth_first_search(Maze *m, Mouse *mouse);
+void random_search(Maze *m, Mouse *mouse);
 
 #endif // MAZE_H_INCLUDED

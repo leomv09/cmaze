@@ -3,6 +3,14 @@
 #include <glib.h>
 #include "maze.h"
 
+#define MAZE_GENERATION_DELAY 9000
+
+/*
+######################################################
+# AUXILIAR FUNCTIONS                                 #
+######################################################
+*/
+
 /*
     Set a unsigned int as a seed for srand() function.
     @param seed: Pointer to the unsigned int.
@@ -86,6 +94,25 @@ void fill_matrix_random(Maze *m)
 }
 
 /*
+    Get the pointer to a random cell of the maze that is marked as path.
+    @param m: Pointer to the Maze struct.
+    @return: Pointer to the cell.
+*/
+Cell* get_random_path_cell(Maze *m)
+{
+    unsigned int seed;
+    set_seed(&seed);
+    srand(seed);
+
+    Cell *cell = m->matrix[rand()%m->rows][rand()%m->cols];
+    while (cell->type != PATH)
+    {
+        cell = m->matrix[rand()%m->rows][rand()%m->cols];
+    }
+    return cell;
+}
+
+/*
     Print the values of the maze in the console.
     @param m: Pointer to the Maze struct.
 */
@@ -129,6 +156,26 @@ void print_maze_graphical(Maze *m)
         printf("\n");
     }
 }
+
+/*
+    Pause the current execution for a certain microseconds.
+    @param show_steps: 1 to make a delay.
+                       Otherwise other number.
+    @param msec: Duration of the delay in microseconds.
+*/
+void delay(int show_steps, useconds_t msec)
+{
+    if (show_steps == 1)
+    {
+        usleep(msec);
+    }
+}
+
+/*
+######################################################
+# MAZE CREATION                                      #
+######################################################
+*/
 
 /*
     Compare two Cells. Used when inserting cells in the neighbors list to check if certain cell is already in the list.
@@ -265,99 +312,6 @@ void mark_remaining_cells_as_walls(Maze *m)
 }
 
 /*
-    Pause the current execution for a certain microseconds.
-    @param show_steps: 1 to make a delay.
-                       Otherwise other number.
-    @param msec: Duration of the delay in microseconds.
-*/
-void delay(int show_steps, useconds_t msec)
-{
-    if (show_steps == 1)
-    {
-        usleep(msec);
-    }
-}
-
-/*
-    Appy Prim Algorithm to a matrix and construct a maze.
-    @param m: Pointer to the Maze struct.
-    @param show_steps: 1 to pause the function when marking a cell as part of the maze.
-                       Otherwise other number.
-    @param msec: Duration of the pause in microseconds.
-
-    Pseudocode:
-        1) Fill the matrix with random numbers.
-        2) Pick a random cell and mark it as part of the maze.
-        3) Add the neighbors of the cell to the neighbors list.
-        4) While there are cells in the list:
-            4.1) Pick the cell with the lowest weight and remove it from the list.
-            4.2) If the cell has one or less neighbors marked as part of the maze:
-                4.2.1) Mark the cell as part of the maze.
-                4.2.2) Add the neighbors of the cell to the neighbors list.
-            4.3) Mark the cell as a wall.
-*/
-void make_maze(Maze *m, int show_steps, useconds_t msec)
-{
-    fill_matrix_random(m);
-    delay(show_steps, msec * 2);
-
-    unsigned int seed;
-    set_seed(&seed);
-    srand(seed);
-
-    GList *neighbors_list = NULL;
-    Cell *current_cell = malloc(sizeof(Cell));
-
-    current_cell->x = rand()%m->rows;
-    current_cell->y = rand()%m->cols;
-
-    m->matrix[current_cell->x][current_cell->y]->type = PATH;
-    reset_cell(m->matrix[current_cell->x][current_cell->y]);
-    neighbors_list = add_neighbors_to_list(current_cell, neighbors_list, m);
-    delay(show_steps, msec);
-
-    while (g_list_length(neighbors_list) > 0)
-    {
-        current_cell = (Cell*) g_list_first(neighbors_list)->data;
-        neighbors_list = g_list_remove(neighbors_list, current_cell);
-
-        if ( get_adjacent_maze_cells_count(current_cell, m) <= 1 )
-        {
-            m->matrix[current_cell->x][current_cell->y]->type = PATH;
-            reset_cell(m->matrix[current_cell->x][current_cell->y]);
-            neighbors_list = add_neighbors_to_list(current_cell, neighbors_list, m);
-            delay(show_steps, msec);
-        }
-        else
-        {
-            m->matrix[current_cell->x][current_cell->y]->type = WALL;
-            reset_cell(m->matrix[current_cell->x][current_cell->y]);
-        }
-    }
-
-    mark_remaining_cells_as_walls(m);
-}
-
-/*
-    Get the pointer to a random cell of the maze that is marked as path.
-    @param m: Pointer to the Maze struct.
-    @return: Pointer to the cell.
-*/
-Cell* get_random_path_cell(Maze *m)
-{
-    unsigned int seed;
-    set_seed(&seed);
-    srand(seed);
-
-    Cell *cell = m->matrix[rand()%m->rows][rand()%m->cols];
-    while (cell->type != PATH)
-    {
-        cell = m->matrix[rand()%m->rows][rand()%m->cols];
-    }
-    return cell;
-}
-
-/*
     Put the objects (Chesee, Poison, Goal) in the maze.
     @param m: Pointer to the Maze struct.
     @param cheese_amount: Number of cheese to put in the maze.
@@ -383,15 +337,86 @@ void put_objets_on_maze(Maze *m, int cheese_amount, int poison_amount)
 }
 
 /*
+    Appy Prim Algorithm to a matrix and construct a maze.
+    @param m: Pointer to the Maze struct.
+    @param show_steps: 1 to pause the function when marking a cell as part of the maze.
+                       Otherwise other number.
+    @param msec: Duration of the pause in microseconds.
+
+    Pseudocode:
+        1) Fill the matrix with random numbers.
+        2) Pick a random cell and mark it as part of the maze.
+        3) Add the neighbors of the cell to the neighbors list.
+        4) While there are cells in the list:
+            4.1) Pick the cell with the lowest weight and remove it from the list.
+            4.2) If the cell has one or less neighbors marked as part of the maze:
+                4.2.1) Mark the cell as part of the maze.
+                4.2.2) Add the neighbors of the cell to the neighbors list.
+            4.3) Mark the cell as a wall.
+*/
+void make_maze(Maze *m, int cheese_amount, int poison_amount, int show_steps)
+{
+    fill_matrix_random(m);
+    delay(show_steps, MAZE_GENERATION_DELAY * 2);
+
+    unsigned int seed;
+    set_seed(&seed);
+    srand(seed);
+
+    GList *neighbors_list = NULL;
+    Cell *current_cell = malloc(sizeof(Cell));
+
+    current_cell->x = rand()%m->rows;
+    current_cell->y = rand()%m->cols;
+
+    m->matrix[current_cell->x][current_cell->y]->type = PATH;
+    reset_cell(m->matrix[current_cell->x][current_cell->y]);
+    neighbors_list = add_neighbors_to_list(current_cell, neighbors_list, m);
+    delay(show_steps, MAZE_GENERATION_DELAY);
+
+    while (g_list_length(neighbors_list) > 0)
+    {
+        current_cell = (Cell*) g_list_first(neighbors_list)->data;
+        neighbors_list = g_list_remove(neighbors_list, current_cell);
+
+        if ( get_adjacent_maze_cells_count(current_cell, m) <= 1 )
+        {
+            m->matrix[current_cell->x][current_cell->y]->type = PATH;
+            reset_cell(m->matrix[current_cell->x][current_cell->y]);
+            neighbors_list = add_neighbors_to_list(current_cell, neighbors_list, m);
+            delay(show_steps, MAZE_GENERATION_DELAY);
+        }
+        else
+        {
+            m->matrix[current_cell->x][current_cell->y]->type = WALL;
+            reset_cell(m->matrix[current_cell->x][current_cell->y]);
+        }
+    }
+
+    mark_remaining_cells_as_walls(m);
+    put_objets_on_maze(m, cheese_amount, poison_amount);
+}
+
+/*
+######################################################
+# MAZE SOLVING                                       #
+######################################################
+*/
+
+/*
     Put a mouse in a random position and set the initial speed.
     @param m: Pointer to the Maze struct.
     @param mouse: Pointer to the Mouse.
 */
-void init_mouse(Maze *m, Mouse* mouse)
+void init_mice(Maze *m, Mouse **mice)
 {
-    mouse->cell = get_random_path_cell(m);
-    mouse->speed = MOUSE_INIT_SPEED;
-    mouse->state = MOUSE_ALIVE;
+    int i;
+    for (i=0; i<3; i++)
+    {
+        mice[i]->cell = get_random_path_cell(m);
+        mice[i]->speed = MOUSE_INIT_SPEED;
+        mice[i]->state = MOUSE_ALIVE;
+    }
 }
 
 /*
@@ -465,6 +490,7 @@ void depth_first_search(Maze *m, Mouse* mouse)
         stack = g_list_remove_link(stack, top);
 
         mouse->cell = (Cell*) top->data;
+        printf("Current (%d, %d)\n", mouse->cell->x, mouse->cell->y);
         if (mouse->cell->type == GOAL)
         {
             return;
@@ -495,8 +521,10 @@ void depth_first_search(Maze *m, Mouse* mouse)
 
 void breadth_first_search(Maze *m, Mouse* mouse)
 {
+    return;
 }
 
 void random_search(Maze *m, Mouse* mouse)
 {
+    return;
 }

@@ -4,6 +4,10 @@
 #include <string.h>
 #include "args.h"
 
+/*
+    Check if a string is a number. Foreach digit check if is a valid digit. No negative number allowed.
+    @param string: String to check.
+*/
 int is_digit(char* string)
 {
     int i;
@@ -16,6 +20,11 @@ int is_digit(char* string)
     return 1;
 }
 
+/*
+    Check some restrictions on the command line argument.
+    @param argc: Number of arguments.
+    @param argv: Array of arguments.
+*/
 int check_args(int argc, char* argv[])
 {
     if (argc != 5)
@@ -25,7 +34,6 @@ int check_args(int argc, char* argv[])
     }
 
     int i, current;
-
     for (i=1; i<argc; i++)
     {
         if (!is_digit(argv[i]))
@@ -49,6 +57,12 @@ int check_args(int argc, char* argv[])
     return 1;
 }
 
+/*
+    Parse the command line arguments as integers and store it in a Argument struct.
+    @param argc: Number of arguments.
+    @param argv: Array of arguments.
+    @param args: Struct to store the parsed arguments.
+*/
 void parse_args(int argc, char* argv[], Arguments* args)
 {
     args->rows = atoi(argv[1]);

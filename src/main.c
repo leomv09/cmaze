@@ -6,9 +6,14 @@
 #include "args.h"
 #include "maze.h"
 
-#define DELAY 9000
 #define ANIMATED 1
 #define NOT_ANIMATED 0
+
+/*
+######################################################
+# GLOBAL DATA                                        #
+######################################################
+*/
 
 typedef struct
 {
@@ -18,6 +23,13 @@ typedef struct
 } Global_Data;
 
 static int animation_running = 0;
+static int maze_created = 0;
+
+/*
+######################################################
+# DRAWING                                            #
+######################################################
+*/
 
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 {
@@ -31,24 +43,21 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 
     int cell_height =  height/data->m->rows;
     int cell_width = width/data->m->cols;
-    int x = 0;
-    int y = 0;
 
     int i, j;
+    Cell* current_cell;
     for (i=0; i<data->m->rows; i++)
     {
         for (j=0; j<data->m->cols; j++)
         {
-            if (data->m->matrix[i][j]->type == PATH)
+            current_cell = data->m->matrix[i][j];
+            if (current_cell->type == PATH)
             {
-                cairo_rectangle(cr, x, y, cell_width, cell_height);
+                cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
                 cairo_fill(cr);
                 cairo_stroke(cr);
             }
-            x += cell_width;
         }
-        x = 0;
-        y += cell_height;
     }
 }
 
@@ -58,21 +67,23 @@ static gboolean redraw_widget(GtkWidget *widget)
     return TRUE;
 }
 
+/*
+######################################################
+# MAZE CREATION                                      #
+######################################################
+*/
+
 void* create_maze_animated_thread(void *param)
 {
     animation_running = 1;
+    maze_created = 0;
 
     Global_Data *data = (Global_Data*) param;
-    make_maze(data->m, ANIMATED, DELAY);
-    put_objets_on_maze(data->m, data->args->cheese, data->args->poison);
-
-    int i;
-    for (i=0; i<3; i++)
-    {
-        init_mouse(data->m, data->mice[i]);
-    }
+    make_maze(data->m, data->args->cheese, data->args->poison, ANIMATED);
+    init_mice(data->m, data->mice);
 
     animation_running = 0;
+    maze_created = 1;
     pthread_exit(0);
 }
 
@@ -89,17 +100,20 @@ static void create_maze(GtkWidget *widget, Global_Data *data)
 {
     if (animation_running == 0)
     {
+        maze_created = 0;
 
-        make_maze(data->m, NOT_ANIMATED, DELAY);
-        put_objets_on_maze(data->m, data->args->cheese, data->args->poison);
+        make_maze(data->m, data->args->cheese, data->args->poison, NOT_ANIMATED);
+        init_mice(data->m, data->mice);
 
-        int i;
-        for (i=0; i<3; i++)
-        {
-            init_mouse(data->m, data->mice[i]);
-        }
+        maze_created = 1;
     }
 }
+
+/*
+######################################################
+# MAZE SOLVING                                       #
+######################################################
+*/
 
 void* start_depth_thread(void *param)
 {
@@ -124,7 +138,7 @@ void* start_random_thread(void *param)
 
 static void start_simulation(GtkWidget *widget, Global_Data *data)
 {
-    if (animation_running == 0)
+    if (maze_created == 1)
     {
         pthread_t* threads = malloc(3 * sizeof(pthread_t));
         pthread_create(&threads[0], NULL, start_depth_thread, data);
@@ -132,6 +146,12 @@ static void start_simulation(GtkWidget *widget, Global_Data *data)
         pthread_create(&threads[2], NULL, start_random_thread, data);
     }
 }
+
+/*
+######################################################
+# MAIN                                               #
+######################################################
+*/
 
 int main(int argc, char *argv[])
 {
@@ -161,6 +181,7 @@ int main(int argc, char *argv[])
         data->m = m;
         data->mice = mice;
 
+        // User Interface
         gtk_init (&argc, &argv);
         GtkBuilder *builder = gtk_builder_new ();
         gtk_builder_add_from_file (builder, "src/gui.glade", NULL);
