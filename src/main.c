@@ -33,33 +33,81 @@ static int maze_created = 0;
 
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 {
+
+        int height = gtk_widget_get_allocated_height(widget);
+        int width = gtk_widget_get_allocated_width(widget);
+
+        cairo_set_source_rgb(cr, 0, 0, 0);
+        cairo_rectangle(cr, 0, 0, width, height);
+        cairo_fill(cr);
+        cairo_set_source_rgb(cr, 1, 1, 1);
+
+        int cell_height =  height/data->m->rows;
+        int cell_width = width/data->m->cols;
+
+        int i, j;
+        Cell* current_cell;
+        for (i=0; i<data->m->rows; i++)
+        {
+            for (j=0; j<data->m->cols; j++)
+            {
+                current_cell = data->m->matrix[i][j];
+                if (current_cell->type == PATH)
+                {
+                    cairo_set_source_rgb(cr, 1, 1, 1);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                }
+                if(current_cell->type == POISON)
+                {
+                    cairo_set_source_rgb(cr, 1, 0, 0);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                }
+                if(current_cell->type == CHEESE)
+                {
+                    cairo_set_source_rgb(cr, 1.0, 1.0, 0.0);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                }
+                if(current_cell->type == GOAL)
+                {
+                    cairo_set_source_rgb(cr, 0.0, 1.0, 0.0);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                }
+                if((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
+                {
+                    /*if((data->mice[2]->cell->type != GOAL) || (data->mice[2]->cell->type != GOAL) || (data->mice[2]->cell->type != GOAL))
+                    {*/
+                        cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);
+                        cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                        cairo_fill(cr);
+                        cairo_stroke(cr);
+                    //}
+
+                }
+            }
+        }
+
+}
+
+/*static void draw_solution(GtkWidget *widget, cairo_t *cr, Global_Data *data, int solution_type)
+{
     int height = gtk_widget_get_allocated_height(widget);
     int width = gtk_widget_get_allocated_width(widget);
-
-    cairo_set_source_rgb(cr, 0, 0, 0);
-    cairo_rectangle(cr, 0, 0, width, height);
-    cairo_fill(cr);
-    cairo_set_source_rgb(cr, 1, 1, 1);
 
     int cell_height =  height/data->m->rows;
     int cell_width = width/data->m->cols;
 
     int i, j;
     Cell* current_cell;
-    for (i=0; i<data->m->rows; i++)
-    {
-        for (j=0; j<data->m->cols; j++)
-        {
-            current_cell = data->m->matrix[i][j];
-            if (current_cell->type == PATH)
-            {
-                cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                cairo_fill(cr);
-                cairo_stroke(cr);
-            }
-        }
-    }
-}
+
+}*/
 
 static gboolean redraw_widget(GtkWidget *widget)
 {
