@@ -17,6 +17,8 @@
 
 typedef struct
 {
+    GtkImage* imag1, *imag2, *imag3;
+    GdkPixbuf* cheese_image, *poison_image, *mouse_image;
     Maze* m;
     Arguments* args;
     Mouse** mice;
@@ -61,17 +63,29 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 }
                 if(current_cell->type == POISON)
                 {
-                    cairo_set_source_rgb(cr, 1, 0, 0);
+                    //Interfaz con imágenes.
+                    gdk_cairo_set_source_pixbuf(cr, data->poison_image, cell_width, cell_height);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_paint(cr);
+                    cairo_fill(cr);
+                    //interfaz sin imágenes.
+                    /*cairo_set_source_rgb(cr, 1, 0, 0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
                     cairo_fill(cr);
-                    cairo_stroke(cr);
+                    cairo_stroke(cr);*/
                 }
                 if(current_cell->type == CHEESE)
                 {
-                    cairo_set_source_rgb(cr, 1.0, 1.0, 0.0);
+                    //Interfaz con imágenes.
+                    gdk_cairo_set_source_pixbuf(cr, data->cheese_image, cell_width, cell_height);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_paint(cr);
+                    cairo_fill(cr);
+                    //interfaz sin imágenes.
+                    /*cairo_set_source_rgb(cr, 1.0, 1.0, 0.0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
                     cairo_fill(cr);
-                    cairo_stroke(cr);
+                    cairo_stroke(cr);*/
                 }
                 if(current_cell->type == GOAL)
                 {
@@ -82,32 +96,16 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 }
                 if((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
                 {
-                    /*if((data->mice[2]->cell->type != GOAL) || (data->mice[2]->cell->type != GOAL) || (data->mice[2]->cell->type != GOAL))
-                    {*/
-                        cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);
-                        cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                        cairo_fill(cr);
-                        cairo_stroke(cr);
-                    //}
-
+                    cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);
+                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
                 }
             }
         }
 
 }
 
-/*static void draw_solution(GtkWidget *widget, cairo_t *cr, Global_Data *data, int solution_type)
-{
-    int height = gtk_widget_get_allocated_height(widget);
-    int width = gtk_widget_get_allocated_width(widget);
-
-    int cell_height =  height/data->m->rows;
-    int cell_width = width/data->m->cols;
-
-    int i, j;
-    Cell* current_cell;
-
-}*/
 
 static gboolean redraw_widget(GtkWidget *widget)
 {
@@ -223,11 +221,16 @@ int main(int argc, char *argv[])
             mice[i] = malloc(sizeof(Mouse));
         }
 
+        g_type_init();
         // Data that will be passed to the signals.
         Global_Data* data = malloc(sizeof(Global_Data));
         data->args = args;
         data->m = m;
         data->mice = mice;
+        data->imag1 = (GtkImage*)gtk_image_new_from_file ("cheese.png");
+        data->imag2 = (GtkImage*)gtk_image_new_from_file ("poison.png");
+        data->cheese_image = gtk_image_get_pixbuf (data->imag1);
+        data->poison_image = gtk_image_get_pixbuf (data->imag2);
 
         // User Interface
         gtk_init (&argc, &argv);
