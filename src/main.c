@@ -17,7 +17,6 @@
 
 typedef struct
 {
-    GtkImage* imag1, *imag2, *imag3;
     GdkPixbuf* cheese_image, *poison_image, *mouse_image;
     Maze* m;
     Arguments* args;
@@ -46,6 +45,10 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 
         int cell_height =  height/data->m->rows;
         int cell_width = width/data->m->cols;
+        //Image Resizing.
+        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_NEAREST);
+        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_NEAREST);
+        data->mouse_image = gdk_pixbuf_scale_simple(data->mouse_image, cell_width, cell_height, GDK_INTERP_NEAREST);
 
         int i, j;
         Cell* current_cell;
@@ -64,28 +67,23 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 if(current_cell->type == POISON)
                 {
                     //Interfaz con imágenes.
-                    gdk_cairo_set_source_pixbuf(cr, data->poison_image, cell_width, cell_height);
+                    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                    gdk_cairo_set_source_pixbuf(cr, data->poison_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
                     cairo_paint(cr);
                     cairo_fill(cr);
-                    //interfaz sin imágenes.
-                    /*cairo_set_source_rgb(cr, 1, 0, 0);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);*/
                 }
                 if(current_cell->type == CHEESE)
                 {
                     //Interfaz con imágenes.
-                    gdk_cairo_set_source_pixbuf(cr, data->cheese_image, cell_width, cell_height);
+                    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
+                    cairo_fill(cr);
+                    cairo_stroke(cr);
+                    gdk_cairo_set_source_pixbuf(cr, data->cheese_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
-                    cairo_fill(cr);
-                    //interfaz sin imágenes.
-                    /*cairo_set_source_rgb(cr, 1.0, 1.0, 0.0);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);*/
                 }
                 if(current_cell->type == GOAL)
                 {
@@ -96,10 +94,13 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 }
                 if((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
                 {
-                    cairo_set_source_rgb(cr, 0.0, 0.0, 1.0);
+                    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
                     cairo_fill(cr);
                     cairo_stroke(cr);
+                    gdk_cairo_set_source_pixbuf(cr, data->mouse_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
+                    cairo_paint(cr);
+                    cairo_fill(cr);
                 }
             }
         }
@@ -221,17 +222,16 @@ int main(int argc, char *argv[])
             mice[i] = malloc(sizeof(Mouse));
         }
 
-        g_type_init();
+        g_type_init();//
         // Data that will be passed to the signals.
         Global_Data* data = malloc(sizeof(Global_Data));
         data->args = args;
         data->m = m;
         data->mice = mice;
-        data->imag1 = (GtkImage*)gtk_image_new_from_file ("cheese.png");
-        data->imag2 = (GtkImage*)gtk_image_new_from_file ("poison.png");
-        data->cheese_image = gtk_image_get_pixbuf (data->imag1);
-        data->poison_image = gtk_image_get_pixbuf (data->imag2);
-
+        //Image loading
+        data->cheese_image = gdk_pixbuf_new_from_file ("res/img/cheese.png", NULL);
+        data->poison_image = gdk_pixbuf_new_from_file ("res/img/poison.png", NULL);
+        data->mouse_image = gdk_pixbuf_new_from_file ("res/img/mouse.png", NULL);
         // User Interface
         gtk_init (&argc, &argv);
         GtkBuilder *builder = gtk_builder_new ();
