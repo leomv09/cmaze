@@ -426,7 +426,7 @@ void init_mice(Maze *m, Mouse **mice)
     @param neighbors_stack: The stack where the neighbors will be pushed.
     @Maze m: Pointer to the Maze.
 */
-GList* push_unvisited_dfs_neighbors_to_stack(Cell *cell, GList* neighbors_stack, Maze *m)
+GList* push_unvisited_dfs_neighbors_to_stack(Cell *cell, GList* stack, Maze *m)
 {
     Cell* current_neighbor;
 
@@ -434,33 +434,122 @@ GList* push_unvisited_dfs_neighbors_to_stack(Cell *cell, GList* neighbors_stack,
     if (cell->x-1 >= 0 && m->matrix[cell->x-1][cell->y]->type != WALL && m->matrix[cell->x-1][cell->y]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x-1][cell->y];
-        neighbors_stack = g_list_append(neighbors_stack, cell);
-        neighbors_stack = g_list_append(neighbors_stack, current_neighbor);
+        stack = g_list_append(stack, cell);
+        stack = g_list_append(stack, current_neighbor);
     }
     // Vecino Derecho
     if (cell->x+1 < m->rows && m->matrix[cell->x+1][cell->y]->type != WALL && m->matrix[cell->x+1][cell->y]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x+1][cell->y];
-        neighbors_stack = g_list_append(neighbors_stack, cell);
-        neighbors_stack = g_list_append(neighbors_stack, current_neighbor);
+        stack = g_list_append(stack, cell);
+        stack = g_list_append(stack, current_neighbor);
     }
     // Vecino Arriba
     if (cell->y-1 >= 0 && m->matrix[cell->x][cell->y-1]->type != WALL && m->matrix[cell->x][cell->y-1]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x][cell->y-1];
-        neighbors_stack = g_list_append(neighbors_stack, cell);
-        neighbors_stack = g_list_append(neighbors_stack, current_neighbor);
+        stack = g_list_append(stack, cell);
+        stack = g_list_append(stack, current_neighbor);
     }
     // Vecino Abajo
     if (cell->y+1 < m->cols && m->matrix[cell->x][cell->y+1]->type != WALL && m->matrix[cell->x][cell->y+1]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x][cell->y+1];
-        neighbors_stack = g_list_append(neighbors_stack, cell);
-        neighbors_stack = g_list_append(neighbors_stack, current_neighbor);
+        stack = g_list_append(stack, cell);
+        stack= g_list_append(stack, current_neighbor);
     }
 
-    return neighbors_stack;
+    return stack;
 }
+
+/*
+    Add the nighbors of a given cell that are not visited by bfs algorithm to a list.
+    NOTE: The cell is pushed after the neighbor, this ensures that the cell will be revisited in the backtracking.
+    @param cell: The cell used to find the neighbors.
+    @param neighbors_stack: The queue where the neighbors will be put.
+    @Maze m: Pointer to the Maze.
+*/
+GList* put_unvisited_bfs_neighbors_to_queue(Cell *current_cell, GList* queue, Maze *m)
+{
+    Cell* neighbor;
+
+    // Left neighbor (x-1 position).
+    if (current_cell->x-1 >= 0 && m->matrix[current_cell->x-1][current_cell->y]->type != WALL && m->matrix[current_cell->x-1][current_cell->y]->visited_bfs == 0)
+    {
+        neighbor = m->matrix[current_cell->x-1][current_cell->y];
+        queue = g_list_append(queue, neighbor);
+        queue = g_list_append(queue, current_cell);
+    }
+    // Right neighbor (x+1 position).
+    if (current_cell->x+1 < m->rows && m->matrix[current_cell->x+1][current_cell->y]->type != WALL && m->matrix[current_cell->x+1][current_cell->y]->visited_bfs == 0)
+    {
+        neighbor = m->matrix[current_cell->x+1][current_cell->y];
+        queue = g_list_append(queue, neighbor);
+        queue = g_list_append(queue, current_cell);
+    }
+    // Upper neighbor (y+1 position)
+    if (current_cell->y-1 >= 0 && m->matrix[current_cell->x][current_cell->y-1]->type != WALL && m->matrix[current_cell->x][current_cell->y-1]->visited_bfs == 0)
+    {
+        neighbor = m->matrix[current_cell->x][current_cell->y-1];
+        queue = g_list_append(queue, neighbor);
+        queue = g_list_append(queue, current_cell);
+    }
+    // Lower neighbor (y-1 position).
+    if (current_cell->y+1 < m->cols && m->matrix[current_cell->x][current_cell->y+1]->type != WALL && m->matrix[current_cell->x][current_cell->y+1]->visited_bfs == 0)
+    {
+        neighbor = m->matrix[current_cell->x][current_cell->y+1];
+        queue = g_list_append(queue, neighbor);
+        queue = g_list_append(queue, current_cell);
+    }
+
+    return queue;
+}
+
+/*
+    Add the nighbors of a given cell to a list.
+    @param cell: The cell used to find the neighbors.
+    @Maze m: Pointer to the Maze.
+*/
+GList* get_possible_neighbors(Cell *current_cell, Maze *m)
+{
+    Cell* neighbor;
+    GList* neighbors_list = NULL;
+
+    // Left neighbor (x-1 position).
+    if (current_cell->x-1 >= 0 && m->matrix[current_cell->x-1][current_cell->y]->type != WALL)
+    {
+        neighbor = m->matrix[current_cell->x-1][current_cell->y];
+        neighbors_list = g_list_append(neighbors_list, neighbor);
+    }
+    // Right neighbor (x+1 position).
+    if (current_cell->x+1 < m->rows && m->matrix[current_cell->x+1][current_cell->y]->type != WALL)
+    {
+        neighbor = m->matrix[current_cell->x+1][current_cell->y];
+        neighbors_list = g_list_append(neighbors_list, neighbor);
+    }
+    // Upper neighbor (y+1 position)
+    if (current_cell->y-1 >= 0 && m->matrix[current_cell->x][current_cell->y-1]->type != WALL)
+    {
+        neighbor = m->matrix[current_cell->x][current_cell->y-1];
+        neighbors_list = g_list_append(neighbors_list, neighbor);
+    }
+    // Lower neighbor (y-1 position).
+    if (current_cell->y+1 < m->cols && m->matrix[current_cell->x][current_cell->y+1]->type != WALL)
+    {
+        neighbor = m->matrix[current_cell->x][current_cell->y+1];
+        neighbors_list = g_list_append(neighbors_list, neighbor);
+    }
+
+    return neighbors_list;
+}
+
+GList* get_random_cell_from_list (GList* cells_list)
+{
+    int pos = rand()%(g_list_length(cells_list));
+    GList *random_cell = g_list_nth(cells_list, pos);
+    return random_cell;
+}
+
 
 /*
     Perform a Depth First Search over a maze. The initial point will be the mouse cell and the end point will be the cell in the maze marked as GOAL.
@@ -519,12 +608,121 @@ void depth_first_search(Maze *m, Mouse* mouse)
     }
 }
 
+/*
+    Perform a breadth First Search over a maze. The initial point will be the mouse's cell and the end point will be the cell in the maze marked as GOAL.
+    @param m: Pointer to the Maze.
+    @param mouse: Pointer to the Mouse.
+
+    Pseudocode:
+        1) Put the initial cell in the queue.
+        2) While there are cells in the queue:
+            2.1) Get the first cell in the queue.
+            2.2) Remove the obtained value of the queue.
+            2.3) Change the cell of the mouse to the obtained cell.
+            2.4) If the mouse reaches the end of the maze, then the search finishes.
+            2.5) If the mouse eats a cheese, then increase the speed.
+            2.5) If the mouse eats a poison, then the mouse is dead.
+            2.7) If the cell is not marked as visited:
+                2.7.1) Mark it as visited.
+                2.7.2) For all unvisited neighbors of the cell:
+                    2.7.2.1) Put the cell in the queue (To avoid "teletransportation").
+                    2.7.2.2) Put the neighbor in the stack.
+*/
 void breadth_first_search(Maze *m, Mouse* mouse)
 {
-    return;
+    GList *queue = NULL;
+    GList *first = NULL;
+    queue = g_list_append(queue, mouse->cell);
+
+    while (g_list_length(queue) > 0)
+    {
+        first = g_list_first(queue);
+        queue = g_list_remove_link(queue, first);
+
+        mouse->cell = (Cell*) first->data;
+        printf("Current BFS (%d, %d)\n", mouse->cell->x, mouse->cell->y);
+        if (mouse->cell->type == GOAL)
+        {
+            return;
+        }
+        else if (mouse->cell->type == CHEESE)
+        {
+            mouse->cell->type = PATH;
+            if (mouse->speed > MOUSE_MAX_SPEED)
+            {
+                mouse->speed -= MOUSE_SPEED_INCREMENT;
+            }
+        }
+        else if (mouse->cell->type == POISON)
+        {
+            mouse->cell->type = PATH;
+            mouse->state = MOUSE_DEAD;
+            return;
+        }
+        usleep(mouse->speed);
+
+        if ( mouse->cell->visited_bfs == 0 )
+        {
+            mouse->cell->visited_bfs = 1;
+            queue = put_unvisited_bfs_neighbors_to_queue(mouse->cell, queue, m);
+        }
+    }
 }
 
+/*
+    Perform a random search over a maze. The initial point will be the mouse's cell and the end point will be the cell in the maze marked as GOAL.
+    @param m: Pointer to the Maze.
+    @param mouse: Pointer to the Mouse.
+
+    Pseudocode:
+    neighbors list: List of the neighbors cells, and where the possible(random) neighbor is going to be chosen.
+        1) Put the initial cell in the neigbor list.
+        2) While there are cells in list:
+            2.1) Get the first cell in the list.
+            2.2) Change the cell of the mouse to the obtained cell.
+            2.3) If the mouse reaches the end of the maze, then the search finishes.
+            2.4) If the mouse eats a cheese, then increase the speed.
+            2.5) If the mouse eats a poison, then the mouse is dead.
+            2.6) Get a new list of neighbors based on the mouse's current cell.
+            2.7) Reapeat from 2.
+*/
 void random_search(Maze *m, Mouse* mouse)
 {
-    return;
+    GList* neighbors_list = NULL;
+    GList* current_cell = NULL;
+    neighbors_list = get_possible_neighbors(mouse->cell, m);
+
+    while(g_list_length(neighbors_list) > 0)
+    {
+        current_cell = get_random_cell_from_list(neighbors_list);
+        mouse->cell = (Cell*) current_cell->data;
+        printf("Current Random (%d, %d)\n", mouse->cell->x, mouse->cell->y);
+        if (mouse->cell->type == GOAL)
+        {
+            return;
+        }
+        else if (mouse->cell->type == CHEESE)
+        {
+            mouse->cell->type = PATH;
+            neighbors_list = get_possible_neighbors(mouse->cell, m);
+            if (mouse->speed > MOUSE_MAX_SPEED)
+            {
+                mouse->speed -= MOUSE_SPEED_INCREMENT;
+            }
+        }
+        else if (mouse->cell->type == POISON)
+        {
+            mouse->cell->type = PATH;
+            mouse->state = MOUSE_DEAD;
+            return;
+        }
+        usleep(mouse->speed);
+        neighbors_list = get_possible_neighbors(mouse->cell, m);
+    }
 }
+
+
+
+
+
+
