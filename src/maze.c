@@ -430,28 +430,28 @@ GList* push_unvisited_dfs_neighbors_to_stack(Cell *cell, GList* stack, Maze *m)
 {
     Cell* current_neighbor;
 
-    // Vecino Izquierdo
+    // Left neighbor (x-1 position).
     if (cell->x-1 >= 0 && m->matrix[cell->x-1][cell->y]->type != WALL && m->matrix[cell->x-1][cell->y]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x-1][cell->y];
         stack = g_list_append(stack, cell);
         stack = g_list_append(stack, current_neighbor);
     }
-    // Vecino Derecho
+    // Right neighbor (x+1 position).
     if (cell->x+1 < m->rows && m->matrix[cell->x+1][cell->y]->type != WALL && m->matrix[cell->x+1][cell->y]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x+1][cell->y];
         stack = g_list_append(stack, cell);
         stack = g_list_append(stack, current_neighbor);
     }
-    // Vecino Arriba
+    // Upper neighbor (y-1 position).
     if (cell->y-1 >= 0 && m->matrix[cell->x][cell->y-1]->type != WALL && m->matrix[cell->x][cell->y-1]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x][cell->y-1];
         stack = g_list_append(stack, cell);
         stack = g_list_append(stack, current_neighbor);
     }
-    // Vecino Abajo
+    // Lower neighbor (y+1 position).
     if (cell->y+1 < m->cols && m->matrix[cell->x][cell->y+1]->type != WALL && m->matrix[cell->x][cell->y+1]->visited_dfs == 0)
     {
         current_neighbor = m->matrix[cell->x][cell->y+1];
@@ -465,8 +465,8 @@ GList* push_unvisited_dfs_neighbors_to_stack(Cell *cell, GList* stack, Maze *m)
 /*
     Add the nighbors of a given cell that are not visited by bfs algorithm to a list.
     NOTE: The cell is pushed after the neighbor, this ensures that the cell will be revisited in the backtracking.
-    @param cell: The cell used to find the neighbors.
-    @param neighbors_stack: The queue where the neighbors will be put.
+    @param current_cell: The cell used to find the neighbors.
+    @param queue: The queue where the neighbors will be put.
     @Maze m: Pointer to the Maze.
 */
 GList* put_unvisited_bfs_neighbors_to_queue(Cell *current_cell, GList* queue, Maze *m)
@@ -487,14 +487,14 @@ GList* put_unvisited_bfs_neighbors_to_queue(Cell *current_cell, GList* queue, Ma
         queue = g_list_append(queue, neighbor);
         queue = g_list_append(queue, current_cell);
     }
-    // Upper neighbor (y+1 position)
+    // Upper neighbor (y-1 position)
     if (current_cell->y-1 >= 0 && m->matrix[current_cell->x][current_cell->y-1]->type != WALL && m->matrix[current_cell->x][current_cell->y-1]->visited_bfs == 0)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y-1];
         queue = g_list_append(queue, neighbor);
         queue = g_list_append(queue, current_cell);
     }
-    // Lower neighbor (y-1 position).
+    // Lower neighbor (y+1 position).
     if (current_cell->y+1 < m->cols && m->matrix[current_cell->x][current_cell->y+1]->type != WALL && m->matrix[current_cell->x][current_cell->y+1]->visited_bfs == 0)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y+1];
@@ -507,7 +507,7 @@ GList* put_unvisited_bfs_neighbors_to_queue(Cell *current_cell, GList* queue, Ma
 
 /*
     Add the nighbors of a given cell to a list.
-    @param cell: The cell used to find the neighbors.
+    @param current_cell: The cell used to find the neighbors.
     @Maze m: Pointer to the Maze.
 */
 GList* get_possible_neighbors(Cell *current_cell, Maze *m)
@@ -527,13 +527,13 @@ GList* get_possible_neighbors(Cell *current_cell, Maze *m)
         neighbor = m->matrix[current_cell->x+1][current_cell->y];
         neighbors_list = g_list_append(neighbors_list, neighbor);
     }
-    // Upper neighbor (y+1 position)
+    // Upper neighbor (y-1 position)
     if (current_cell->y-1 >= 0 && m->matrix[current_cell->x][current_cell->y-1]->type != WALL)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y-1];
         neighbors_list = g_list_append(neighbors_list, neighbor);
     }
-    // Lower neighbor (y-1 position).
+    // Lower neighbor (y+1 position).
     if (current_cell->y+1 < m->cols && m->matrix[current_cell->x][current_cell->y+1]->type != WALL)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y+1];
@@ -579,7 +579,6 @@ void depth_first_search(Maze *m, Mouse* mouse)
         stack = g_list_remove_link(stack, top);
 
         mouse->cell = (Cell*) top->data;
-        printf("Current (%d, %d)\n", mouse->cell->x, mouse->cell->y);
         if (mouse->cell->type == GOAL)
         {
             return;
@@ -640,7 +639,6 @@ void breadth_first_search(Maze *m, Mouse* mouse)
         queue = g_list_remove_link(queue, first);
 
         mouse->cell = (Cell*) first->data;
-        printf("Current BFS (%d, %d)\n", mouse->cell->x, mouse->cell->y);
         if (mouse->cell->type == GOAL)
         {
             return;
@@ -696,7 +694,7 @@ void random_search(Maze *m, Mouse* mouse)
     {
         current_cell = get_random_cell_from_list(neighbors_list);
         mouse->cell = (Cell*) current_cell->data;
-        printf("Current Random (%d, %d)\n", mouse->cell->x, mouse->cell->y);
+
         if (mouse->cell->type == GOAL)
         {
             return;

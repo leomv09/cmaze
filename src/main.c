@@ -17,7 +17,7 @@
 
 typedef struct
 {
-    GdkPixbuf* cheese_image, *poison_image, *mouse_image;
+    GdkPixbuf* cheese_image, *poison_image, *mouse_image, *goal_image;
     Maze* m;
     Arguments* args;
     Mouse** mice;
@@ -38,17 +38,18 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
         int height = gtk_widget_get_allocated_height(widget);
         int width = gtk_widget_get_allocated_width(widget);
 
-        cairo_set_source_rgb(cr, 0, 0, 0);
+        cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
         cairo_rectangle(cr, 0, 0, width, height);
         cairo_fill(cr);
-        cairo_set_source_rgb(cr, 1, 1, 1);
 
         int cell_height =  height/data->m->rows;
         int cell_width = width/data->m->cols;
+
         //Image Resizing.
-        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_NEAREST);
-        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_NEAREST);
-        data->mouse_image = gdk_pixbuf_scale_simple(data->mouse_image, cell_width, cell_height, GDK_INTERP_NEAREST);
+        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->mouse_image = gdk_pixbuf_scale_simple(data->mouse_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->goal_image = gdk_pixbuf_scale_simple(data->goal_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
 
         int i, j;
         Cell* current_cell;
@@ -57,54 +58,35 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
             for (j=0; j<data->m->cols; j++)
             {
                 current_cell = data->m->matrix[i][j];
-                if (current_cell->type == PATH)
+                if (current_cell->type == PATH || current_cell->type == POISON || current_cell->type == CHEESE || current_cell->type == GOAL)
                 {
-                    cairo_set_source_rgb(cr, 1, 1, 1);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);
-                }
-                if(current_cell->type == POISON)
-                {
-                    //Interfaz con imágenes.
                     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
                     cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
                     cairo_fill(cr);
                     cairo_stroke(cr);
-                    gdk_cairo_set_source_pixbuf(cr, data->poison_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
+                }
+                if (current_cell->type == POISON)
+                {
+                    gdk_cairo_set_source_pixbuf(cr, data->poison_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
-                    cairo_fill(cr);
                 }
-                if(current_cell->type == CHEESE)
+                if (current_cell->type == CHEESE)
                 {
-                    //Interfaz con imágenes.
-                    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);
                     gdk_cairo_set_source_pixbuf(cr, data->cheese_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
                 }
-                if(current_cell->type == GOAL)
+                if (current_cell->type == GOAL)
                 {
-                    cairo_set_source_rgb(cr, 0.0, 1.0, 0.0);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);
+                    gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
+                    cairo_paint(cr);
                 }
-                if((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
+                if ((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
                 {
-                    cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
-                    cairo_rectangle(cr, current_cell->x * cell_width, current_cell->y * cell_height, cell_width, cell_height);
-                    cairo_fill(cr);
-                    cairo_stroke(cr);
                     gdk_cairo_set_source_pixbuf(cr, data->mouse_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
                     cairo_paint(cr);
-                    cairo_fill(cr);
                 }
             }
         }
-
 }
 
 
@@ -222,20 +204,22 @@ int main(int argc, char *argv[])
             mice[i] = malloc(sizeof(Mouse));
         }
 
-        g_type_init();//
         // Data that will be passed to the signals.
         Global_Data* data = malloc(sizeof(Global_Data));
         data->args = args;
         data->m = m;
         data->mice = mice;
+
         //Image loading
-        data->cheese_image = gdk_pixbuf_new_from_file ("res/img/cheese.png", NULL);
-        data->poison_image = gdk_pixbuf_new_from_file ("res/img/poison.png", NULL);
-        data->mouse_image = gdk_pixbuf_new_from_file ("res/img/mouse.png", NULL);
+        data->goal_image = gdk_pixbuf_new_from_file ("res/img/goal.svg", NULL);
+        data->cheese_image = gdk_pixbuf_new_from_file ("res/img/cheese.svg", NULL);
+        data->poison_image = gdk_pixbuf_new_from_file ("res/img/poison.svg", NULL);
+        data->mouse_image = gdk_pixbuf_new_from_file ("res/img/mouse.svg", NULL);
+
         // User Interface
         gtk_init (&argc, &argv);
         GtkBuilder *builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, "src/gui.glade", NULL);
+        gtk_builder_add_from_file (builder, "res/gui.glade", NULL);
 
         GObject *window, *drawing_area, *button_create, *button_create_animated, *button_start;
 
