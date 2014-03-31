@@ -9,6 +9,10 @@
 #define ANIMATED 1
 #define NOT_ANIMATED 0
 
+#define DFS 0
+#define BFS 1
+#define RANDOM 2
+
 /*
 ######################################################
 # GLOBAL DATA                                        #
@@ -17,10 +21,10 @@
 
 typedef struct
 {
-    GdkPixbuf* cheese_image, *poison_image, *mouse_image, *goal_image;
-    Maze* m;
-    Arguments* args;
-    Mouse** mice;
+    GdkPixbuf *cheese_image, *poison_image, *skull_image, *goal_image, **mouse_image;
+    Maze *m;
+    Arguments *args;
+    Mouse **mice;
 } Global_Data;
 
 static int animation_running = 0;
@@ -34,22 +38,19 @@ static int maze_created = 0;
 
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 {
-
         int height = gtk_widget_get_allocated_height(widget);
         int width = gtk_widget_get_allocated_width(widget);
+        int cell_height =  height/data->m->rows;
+        int cell_width = width/data->m->cols;
+
+        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->skull_image = gdk_pixbuf_scale_simple(data->skull_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+        data->goal_image = gdk_pixbuf_scale_simple(data->goal_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
 
         cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
         cairo_rectangle(cr, 0, 0, width, height);
         cairo_fill(cr);
-
-        int cell_height =  height/data->m->rows;
-        int cell_width = width/data->m->cols;
-
-        //Image Resizing.
-        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->mouse_image = gdk_pixbuf_scale_simple(data->mouse_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->goal_image = gdk_pixbuf_scale_simple(data->goal_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
 
         int i, j;
         Cell* current_cell;
@@ -58,6 +59,7 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
             for (j=0; j<data->m->cols; j++)
             {
                 current_cell = data->m->matrix[i][j];
+
                 if (current_cell->type == PATH || current_cell->type == POISON || current_cell->type == CHEESE || current_cell->type == GOAL)
                 {
                     cairo_set_source_rgb(cr, 1.0, 1.0, 1.0);
@@ -77,12 +79,26 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 }
                 if (current_cell->type == GOAL)
                 {
-                    gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
+                    gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);
+                    gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
                 }
-                if ((data->mice[0]->cell == current_cell) || (data->mice[1]->cell == current_cell) || (data->mice[2]->cell == current_cell))
+            }
+        }
+        if (maze_created == 1)
+        {
+            for (i=0; i<3; i++)
+            {
+                current_cell = data->mice[i]->cell;
+                if (data->mice[i]->state == MOUSE_ALIVE)
                 {
-                    gdk_cairo_set_source_pixbuf(cr, data->mouse_image, current_cell->x * cell_width, current_cell->y * cell_height);//An image is selected as asource, instead of a color.
+                    data->mouse_image[i] = gdk_pixbuf_scale_simple(data->mouse_image[i], cell_width, cell_height, GDK_INTERP_BILINEAR);
+                    gdk_cairo_set_source_pixbuf(cr, data->mouse_image[i], current_cell->x * cell_width, current_cell->y * cell_height);
+                    cairo_paint(cr);
+                }
+                else
+                {
+                    gdk_cairo_set_source_pixbuf(cr, data->skull_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
                 }
             }
@@ -147,21 +163,21 @@ static void create_maze(GtkWidget *widget, Global_Data *data)
 void* start_depth_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    depth_first_search(data->m, data->mice[0]);
+    depth_first_search(data->m, data->mice[DFS]);
     pthread_exit(0);
 }
 
 void* start_breadth_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    breadth_first_search(data->m, data->mice[1]);
+    breadth_first_search(data->m, data->mice[BFS]);
     pthread_exit(0);
 }
 
 void* start_random_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    random_search(data->m, data->mice[2]);
+    random_search(data->m, data->mice[RANDOM]);
     pthread_exit(0);
 }
 
@@ -170,9 +186,9 @@ static void start_simulation(GtkWidget *widget, Global_Data *data)
     if (maze_created == 1)
     {
         pthread_t* threads = malloc(3 * sizeof(pthread_t));
-        pthread_create(&threads[0], NULL, start_depth_thread, data);
-        pthread_create(&threads[1], NULL, start_breadth_thread, data);
-        pthread_create(&threads[2], NULL, start_random_thread, data);
+        pthread_create(&threads[DFS], NULL, start_depth_thread, data);
+        pthread_create(&threads[BFS], NULL, start_breadth_thread, data);
+        pthread_create(&threads[RANDOM], NULL, start_random_thread, data);
     }
 }
 
@@ -214,7 +230,12 @@ int main(int argc, char *argv[])
         data->goal_image = gdk_pixbuf_new_from_file ("res/img/goal.svg", NULL);
         data->cheese_image = gdk_pixbuf_new_from_file ("res/img/cheese.svg", NULL);
         data->poison_image = gdk_pixbuf_new_from_file ("res/img/poison.svg", NULL);
-        data->mouse_image = gdk_pixbuf_new_from_file ("res/img/mouse.svg", NULL);
+        data->skull_image = gdk_pixbuf_new_from_file ("res/img/skull.svg", NULL);
+
+        data->mouse_image = malloc(3 * sizeof(data->goal_image));
+        data->mouse_image[DFS] = gdk_pixbuf_new_from_file ("res/img/mickey_dfs.svg", NULL);
+        data->mouse_image[BFS] = gdk_pixbuf_new_from_file ("res/img/mickey_bfs.svg", NULL);
+        data->mouse_image[RANDOM] = gdk_pixbuf_new_from_file ("res/img/mickey_random.svg", NULL);
 
         // User Interface
         gtk_init (&argc, &argv);

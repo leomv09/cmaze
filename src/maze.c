@@ -508,46 +508,68 @@ GList* put_unvisited_bfs_neighbors_to_queue(Cell *current_cell, GList* queue, Ma
 /*
     Add the nighbors of a given cell to a list.
     @param current_cell: The cell used to find the neighbors.
+    @param previous_cell: The previous cell.
     @Maze m: Pointer to the Maze.
 */
-GList* get_possible_neighbors(Cell *current_cell, Maze *m)
+GList* get_possible_neighbors_for_random(Cell *current_cell, Cell *previous_cell, Maze *m)
 {
     Cell* neighbor;
     GList* neighbors_list = NULL;
 
     // Left neighbor (x-1 position).
-    if (current_cell->x-1 >= 0 && m->matrix[current_cell->x-1][current_cell->y]->type != WALL)
+    if (current_cell->x-1 >= 0)
     {
         neighbor = m->matrix[current_cell->x-1][current_cell->y];
-        neighbors_list = g_list_append(neighbors_list, neighbor);
+        if (neighbor->type != WALL && compare_cells_by_position(neighbor, previous_cell) != 0)
+        {
+            neighbors_list = g_list_append(neighbors_list, neighbor);
+        }
     }
     // Right neighbor (x+1 position).
-    if (current_cell->x+1 < m->rows && m->matrix[current_cell->x+1][current_cell->y]->type != WALL)
+    if (current_cell->x+1 < m->rows)
     {
         neighbor = m->matrix[current_cell->x+1][current_cell->y];
-        neighbors_list = g_list_append(neighbors_list, neighbor);
+        if (neighbor->type != WALL && compare_cells_by_position(neighbor, previous_cell) != 0)
+        {
+            neighbors_list = g_list_append(neighbors_list, neighbor);
+        }
     }
     // Upper neighbor (y-1 position)
-    if (current_cell->y-1 >= 0 && m->matrix[current_cell->x][current_cell->y-1]->type != WALL)
+    if (current_cell->y-1 >= 0)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y-1];
-        neighbors_list = g_list_append(neighbors_list, neighbor);
+        if (neighbor->type != WALL && compare_cells_by_position(neighbor, previous_cell) != 0)
+        {
+            neighbors_list = g_list_append(neighbors_list, neighbor);
+        }
     }
     // Lower neighbor (y+1 position).
-    if (current_cell->y+1 < m->cols && m->matrix[current_cell->x][current_cell->y+1]->type != WALL)
+    if (current_cell->y+1 < m->cols)
     {
         neighbor = m->matrix[current_cell->x][current_cell->y+1];
-        neighbors_list = g_list_append(neighbors_list, neighbor);
+        if (neighbor->type != WALL && compare_cells_by_position(neighbor, previous_cell) != 0)
+        {
+            neighbors_list = g_list_append(neighbors_list, neighbor);
+        }
+    }
+    // If no neighbors available, insert the previous cell to return.
+    if (g_list_length(neighbors_list) == 0)
+    {
+        neighbors_list = g_list_append(neighbors_list, previous_cell);
     }
 
     return neighbors_list;
 }
 
-GList* get_random_cell_from_list (GList* cells_list)
+/*
+    Get a random element from a list.
+    @param list: The list.
+    @return: The element.
+*/
+GList* get_random_element_from_list (GList* list)
 {
-    int pos = rand()%(g_list_length(cells_list));
-    GList *random_cell = g_list_nth(cells_list, pos);
-    return random_cell;
+    int pos = rand()%(g_list_length(list));
+    return g_list_nth(list, pos);
 }
 
 
@@ -673,36 +695,27 @@ void breadth_first_search(Maze *m, Mouse* mouse)
     @param mouse: Pointer to the Mouse.
 
     Pseudocode:
-    neighbors list: List of the neighbors cells, and where the possible(random) neighbor is going to be chosen.
-        1) Put the initial cell in the neigbor list.
-        2) While there are cells in list:
-            2.1) Get the first cell in the list.
-            2.2) Change the cell of the mouse to the obtained cell.
-            2.3) If the mouse reaches the end of the maze, then the search finishes.
-            2.4) If the mouse eats a cheese, then increase the speed.
-            2.5) If the mouse eats a poison, then the mouse is dead.
-            2.6) Get a new list of neighbors based on the mouse's current cell.
-            2.7) Reapeat from 2.
+        1) Obtain the posible neighbors of the current cell (Without the previous cell).
+        2) While the current cell is not the goal:
+            2.1) Set the previous cell to the current cell.
+            2.2) Set the current cell to a random neighbor.
+            2.3) Obtain the posible neighbors of the current cell (Without the previous cell).
 */
 void random_search(Maze *m, Mouse* mouse)
 {
+    Cell *previous_cell = mouse->cell;
     GList* neighbors_list = NULL;
-    GList* current_cell = NULL;
-    neighbors_list = get_possible_neighbors(mouse->cell, m);
 
-    while(g_list_length(neighbors_list) > 0)
+    neighbors_list = get_possible_neighbors_for_random(mouse->cell, previous_cell, m);
+
+    while (mouse->cell->type != GOAL)
     {
-        current_cell = get_random_cell_from_list(neighbors_list);
-        mouse->cell = (Cell*) current_cell->data;
+        previous_cell = mouse->cell;
+        mouse->cell = (Cell*) get_random_element_from_list(neighbors_list)->data;
 
-        if (mouse->cell->type == GOAL)
-        {
-            return;
-        }
-        else if (mouse->cell->type == CHEESE)
+        if (mouse->cell->type == CHEESE)
         {
             mouse->cell->type = PATH;
-            neighbors_list = get_possible_neighbors(mouse->cell, m);
             if (mouse->speed > MOUSE_MAX_SPEED)
             {
                 mouse->speed -= MOUSE_SPEED_INCREMENT;
@@ -714,8 +727,9 @@ void random_search(Maze *m, Mouse* mouse)
             mouse->state = MOUSE_DEAD;
             return;
         }
+
         usleep(mouse->speed);
-        neighbors_list = get_possible_neighbors(mouse->cell, m);
+        neighbors_list = get_possible_neighbors_for_random(mouse->cell, previous_cell, m);
     }
 }
 

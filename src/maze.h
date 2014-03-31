@@ -3,25 +3,20 @@
 
 #include <unistd.h>
 
-#define WALL -1
-#define PATH 0
-#define GOAL 1
-#define CHEESE 2
-#define POISON 3
-
 #define MOUSE_INIT_SPEED 120000
 #define MOUSE_MAX_SPEED 80000
 #define MOUSE_SPEED_INCREMENT 5000
-#define MOUSE_ALIVE 0
-#define MOUSE_DEAD 1
+
+typedef enum {WALL = -1, PATH, GOAL, CHEESE, POISON} CellType;
+typedef enum {MOUSE_ALIVE, MOUSE_DEAD} MouseState;
 
 typedef struct
 {
     int x;
     int y;
-    int type;
     int visited_dfs;
     int visited_bfs;
+    CellType type;
 } Cell;
 
 typedef struct
@@ -34,7 +29,7 @@ typedef struct
 typedef struct
 {
     Cell *cell;
-    int state;
+    MouseState state;
     useconds_t speed;
 } Mouse;
 
