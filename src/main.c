@@ -36,17 +36,31 @@ static int maze_created = 0;
 ######################################################
 */
 
+void resize_images(GtkWidget *widget, Global_Data *data)
+{
+    int height = gtk_widget_get_allocated_height(widget);
+    int width = gtk_widget_get_allocated_width(widget);
+    int cell_height =  height/data->m->rows;
+    int cell_width = width/data->m->cols;
+
+    data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+    data->skull_image = gdk_pixbuf_scale_simple(data->skull_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+    data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+    data->goal_image = gdk_pixbuf_scale_simple(data->goal_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
+
+    int i;
+    for (i=0; i<3; i++)
+    {
+        data->mouse_image[i] = gdk_pixbuf_scale_simple(data->mouse_image[i], cell_width, cell_height, GDK_INTERP_BILINEAR);
+    }
+}
+
 static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
 {
         int height = gtk_widget_get_allocated_height(widget);
         int width = gtk_widget_get_allocated_width(widget);
         int cell_height =  height/data->m->rows;
         int cell_width = width/data->m->cols;
-
-        data->cheese_image = gdk_pixbuf_scale_simple(data->cheese_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->skull_image = gdk_pixbuf_scale_simple(data->skull_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->poison_image = gdk_pixbuf_scale_simple(data->poison_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
-        data->goal_image = gdk_pixbuf_scale_simple(data->goal_image, cell_width, cell_height, GDK_INTERP_BILINEAR);
 
         cairo_set_source_rgb(cr, 0.0, 0.0, 0.0);
         cairo_rectangle(cr, 0, 0, width, height);
@@ -80,7 +94,6 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 if (current_cell->type == GOAL)
                 {
                     gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);
-                    gdk_cairo_set_source_pixbuf(cr, data->goal_image, current_cell->x * cell_width, current_cell->y * cell_height);
                     cairo_paint(cr);
                 }
             }
@@ -92,15 +105,13 @@ static void draw_maze(GtkWidget *widget, cairo_t *cr, Global_Data *data)
                 current_cell = data->mice[i]->cell;
                 if (data->mice[i]->state == MOUSE_ALIVE)
                 {
-                    data->mouse_image[i] = gdk_pixbuf_scale_simple(data->mouse_image[i], cell_width, cell_height, GDK_INTERP_BILINEAR);
                     gdk_cairo_set_source_pixbuf(cr, data->mouse_image[i], current_cell->x * cell_width, current_cell->y * cell_height);
-                    cairo_paint(cr);
                 }
                 else
                 {
                     gdk_cairo_set_source_pixbuf(cr, data->skull_image, current_cell->x * cell_width, current_cell->y * cell_height);
-                    cairo_paint(cr);
                 }
+                cairo_paint(cr);
             }
         }
 }
@@ -212,7 +223,7 @@ int main(int argc, char *argv[])
         Maze *m = malloc(sizeof(Maze));
         allocate_maze(m, args->rows, args->cols);
 
-        // Array of Mice.
+        // Array of Mouse.
         Mouse **mice = malloc(3 * sizeof(Mouse*));
         int i;
         for (i=0; i<3; i++)
@@ -249,6 +260,7 @@ int main(int argc, char *argv[])
 
         drawing_area = gtk_builder_get_object (builder, "drawing_area");
         g_signal_connect(drawing_area, "draw", G_CALLBACK(draw_maze), data);
+        resize_images(GTK_WIDGET(drawing_area), data);
 
         button_create = gtk_builder_get_object (builder, "button_create");
         g_signal_connect(button_create, "clicked", G_CALLBACK(create_maze), data);
