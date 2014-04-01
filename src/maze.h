@@ -38,8 +38,8 @@ void print_maze(Maze *m);
 void print_maze_graphical(Maze *m);
 void make_maze(Maze *m, int cheese_amount, int poison_amount, int show_steps);
 void init_mice(Maze *m, Mouse **mouse);
-void depth_first_search(Maze *m, Mouse *mouse);
-void breadth_first_search(Maze *m, Mouse *mouse);
-void random_search(Maze *m, Mouse *mouse);
+int depth_first_search(Maze *m, Mouse *mouse);
+int breadth_first_search(Maze *m, Mouse *mouse);
+int random_search(Maze *m, Mouse *mouse);
 
 #endif // MAZE_H_INCLUDED

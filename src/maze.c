@@ -589,7 +589,7 @@ GList* get_random_element_from_list (GList* list)
                     2.3.2.1) Push the cell in the stack.
                     2.3.2.2) Push the neighbor in the stack.
 */
-void depth_first_search(Maze *m, Mouse* mouse)
+int depth_first_search(Maze *m, Mouse* mouse)
 {
     GList *stack = NULL;
     GList *top = NULL;
@@ -603,7 +603,7 @@ void depth_first_search(Maze *m, Mouse* mouse)
         mouse->cell = (Cell*) top->data;
         if (mouse->cell->type == GOAL)
         {
-            return;
+            return 0;
         }
         else if (mouse->cell->type == CHEESE)
         {
@@ -617,7 +617,7 @@ void depth_first_search(Maze *m, Mouse* mouse)
         {
             mouse->cell->type = PATH;
             mouse->state = MOUSE_DEAD;
-            return;
+            return 1;
         }
         usleep(mouse->speed);
 
@@ -627,6 +627,8 @@ void depth_first_search(Maze *m, Mouse* mouse)
             stack = push_unvisited_dfs_neighbors_to_stack(mouse->cell, stack, m);
         }
     }
+
+    return 0;
 }
 
 /*
@@ -649,7 +651,7 @@ void depth_first_search(Maze *m, Mouse* mouse)
                     2.7.2.1) Put the cell in the queue (To avoid "teletransportation").
                     2.7.2.2) Put the neighbor in the stack.
 */
-void breadth_first_search(Maze *m, Mouse* mouse)
+int breadth_first_search(Maze *m, Mouse* mouse)
 {
     GList *queue = NULL;
     GList *first = NULL;
@@ -663,7 +665,7 @@ void breadth_first_search(Maze *m, Mouse* mouse)
         mouse->cell = (Cell*) first->data;
         if (mouse->cell->type == GOAL)
         {
-            return;
+            return 0;
         }
         else if (mouse->cell->type == CHEESE)
         {
@@ -677,7 +679,7 @@ void breadth_first_search(Maze *m, Mouse* mouse)
         {
             mouse->cell->type = PATH;
             mouse->state = MOUSE_DEAD;
-            return;
+            return 1;
         }
         usleep(mouse->speed);
 
@@ -687,6 +689,8 @@ void breadth_first_search(Maze *m, Mouse* mouse)
             queue = put_unvisited_bfs_neighbors_to_queue(mouse->cell, queue, m);
         }
     }
+
+    return 0;
 }
 
 /*
@@ -701,7 +705,7 @@ void breadth_first_search(Maze *m, Mouse* mouse)
             2.2) Set the current cell to a random neighbor.
             2.3) Obtain the posible neighbors of the current cell (Without the previous cell).
 */
-void random_search(Maze *m, Mouse* mouse)
+int random_search(Maze *m, Mouse* mouse)
 {
     Cell *previous_cell = mouse->cell;
     GList* neighbors_list = NULL;
@@ -725,12 +729,14 @@ void random_search(Maze *m, Mouse* mouse)
         {
             mouse->cell->type = PATH;
             mouse->state = MOUSE_DEAD;
-            return;
+            return 1;
         }
 
         usleep(mouse->speed);
         neighbors_list = get_possible_neighbors_for_random(mouse->cell, previous_cell, m);
     }
+
+    return 0;
 }
 
 

@@ -22,12 +22,14 @@
 typedef struct
 {
     GdkPixbuf *cheese_image, *poison_image, *skull_image, *goal_image, **mouse_image;
+    pthread_t *dfs_thread, *bfs_thread, *random_thread;
     Maze *m;
     Arguments *args;
     Mouse **mice;
 } Global_Data;
 
 static int animation_running = 0;
+static int simulation_running = 0;
 static int maze_created = 0;
 
 /*
@@ -145,7 +147,7 @@ void* create_maze_animated_thread(void *param)
 
 static void create_maze_animated(GtkWidget *widget, Global_Data *data)
 {
-    if (animation_running == 0)
+    if (animation_running == 0 && simulation_running == 0)
     {
         pthread_t animated_thread;
         pthread_create(&animated_thread, NULL, create_maze_animated_thread, data);
@@ -154,7 +156,7 @@ static void create_maze_animated(GtkWidget *widget, Global_Data *data)
 
 static void create_maze(GtkWidget *widget, Global_Data *data)
 {
-    if (animation_running == 0)
+    if (animation_running == 0 && simulation_running == 0)
     {
         maze_created = 0;
 
@@ -171,35 +173,76 @@ static void create_maze(GtkWidget *widget, Global_Data *data)
 ######################################################
 */
 
+void show_finish_dialog(gchar *message)
+{
+    GtkWidget *dialog, *content_area, *label;
+    label = gtk_label_new (message);
+    dialog = gtk_dialog_new_with_buttons ("Simulación Terminada",
+                                          NULL,
+                                          GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                          GTK_STOCK_OK,
+                                          GTK_RESPONSE_ACCEPT,
+                                          NULL);
+    content_area = gtk_dialog_get_content_area (GTK_DIALOG (dialog));
+    gtk_container_add (GTK_CONTAINER (content_area), label);
+    g_signal_connect_swapped (dialog, "response", G_CALLBACK (gtk_widget_destroy), dialog);
+    gtk_widget_show_all (dialog);
+    gtk_dialog_run (GTK_DIALOG(dialog));
+}
+
 void* start_depth_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    depth_first_search(data->m, data->mice[DFS]);
+    int result = depth_first_search(data->m, data->mice[DFS]);
+    if (result == 0)
+    {
+        pthread_cancel(*data->bfs_thread);
+        pthread_cancel(*data->random_thread);
+        show_finish_dialog("\n Ganador:  Raton Profundidad. \n");
+        simulation_running = 0;
+        create_maze(NULL, data);
+    }
     pthread_exit(0);
 }
 
 void* start_breadth_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    breadth_first_search(data->m, data->mice[BFS]);
+    int result = breadth_first_search(data->m, data->mice[BFS]);
+    if (result == 0)
+    {
+        pthread_cancel(*data->dfs_thread);
+        pthread_cancel(*data->random_thread);
+        show_finish_dialog("\n Ganador:  Raton Anchura. \n");
+        simulation_running = 0;
+        create_maze(NULL, data);
+    }
     pthread_exit(0);
 }
 
 void* start_random_thread(void *param)
 {
     Global_Data *data = (Global_Data*) param;
-    random_search(data->m, data->mice[RANDOM]);
+    int result = random_search(data->m, data->mice[RANDOM]);
+    if (result == 0)
+    {
+        pthread_cancel(*data->dfs_thread);
+        pthread_cancel(*data->bfs_thread);
+        show_finish_dialog("\n Ganador:  Raton Aleatorio. \n");
+        simulation_running = 0;
+        create_maze(NULL, data);
+    }
     pthread_exit(0);
 }
 
 static void start_simulation(GtkWidget *widget, Global_Data *data)
 {
-    if (maze_created == 1)
+    if (maze_created == 1 && simulation_running == 0)
     {
-        pthread_t* threads = malloc(3 * sizeof(pthread_t));
-        pthread_create(&threads[DFS], NULL, start_depth_thread, data);
-        pthread_create(&threads[BFS], NULL, start_breadth_thread, data);
-        pthread_create(&threads[RANDOM], NULL, start_random_thread, data);
+        simulation_running = 1;
+        pthread_create(data->dfs_thread, NULL, start_depth_thread, data);
+        pthread_create(data->bfs_thread, NULL, start_breadth_thread, data);
+        pthread_create(data->random_thread, NULL, start_random_thread, data);
     }
 }
 
@@ -247,6 +290,11 @@ int main(int argc, char *argv[])
         data->mouse_image[DFS] = gdk_pixbuf_new_from_file ("res/img/mickey_dfs.svg", NULL);
         data->mouse_image[BFS] = gdk_pixbuf_new_from_file ("res/img/mickey_bfs.svg", NULL);
         data->mouse_image[RANDOM] = gdk_pixbuf_new_from_file ("res/img/mickey_random.svg", NULL);
+
+        // Threads
+        data->dfs_thread = malloc(sizeof(pthread_t));
+        data->bfs_thread = malloc(sizeof(pthread_t));
+        data->random_thread = malloc(sizeof(pthread_t));
 
         // User Interface
         gtk_init (&argc, &argv);
